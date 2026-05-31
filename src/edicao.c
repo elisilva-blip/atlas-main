@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+//funcao de cadastramento de pessoas 
 
 void editar_pessoa(Pessoa pessoas[], int total) {
     int id;
