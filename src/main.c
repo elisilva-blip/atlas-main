@@ -1,3 +1,5 @@
+// Ponto de entrada do sistema Atlas — inicializa os dados e gerencia o menu principal
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -8,6 +10,7 @@
 #include "salvar.h"
 #include "excluir.h"
 
+// Limpa o terminal de forma compatível com Windows e sistemas Unix
 void limpar_tela() {
 #ifdef _WIN32
     system("cls");
@@ -16,26 +19,34 @@ void limpar_tela() {
 #endif
 }
 
+// Aguarda o usuário pressionar Enter e limpa a tela em seguida
 void aguardar_enter() {
     printf("\nPressione Enter para continuar...");
     getchar();
     limpar_tela();
 }
 
+// Carrega os registros do arquivo binário para o array em memória.
+// Se o arquivo não existir ou houver erro de leitura, inicializa o total como 0.
 void carregar_pessoas(Pessoa pessoas[], int *total) {
     FILE *arquivo = fopen(DB_PATH, "rb");
 
+    // Se o arquivo não existir, inicializa sem registros
     if (arquivo == NULL) {
         *total = 0;
         return;
     }
 
+    // Lê o total de registros armazenados no início do arquivo
     if (fread(total, sizeof(int), 1, arquivo) != 1) {
         *total = 0;
     } else {
+        // Garante que o total não ultrapasse o limite máximo do array
         if (*total > MAX_PESSOAS) {
             *total = MAX_PESSOAS;
         }
+
+        // Lê os registros do arquivo para o array em memória
         if (fread(pessoas, sizeof(Pessoa), *total, arquivo) != (size_t)*total) {
             *total = 0;
         }
@@ -49,13 +60,16 @@ int main() {
     int total = 0;
     int opcao;
 
+    // Carrega os dados persistidos do arquivo binário ao iniciar o sistema
     carregar_pessoas(pessoas, &total);
 
+    // Determina o maior ID existente para garantir que o próximo seja único
     int proximo_id = 0;
     for (int i = 0; i < total; i++)
         if (pessoas[i].id > proximo_id)
             proximo_id = pessoas[i].id;
 
+    // Loop principal do sistema — exibe o menu e processa a opção escolhida
     do {
         printf("\n=====================================\n");
         printf("         SISTEMA ATLAS - v1.0        \n");
@@ -72,6 +86,7 @@ int main() {
         printf("=====================================\n");
         printf("Escolha: ");
 
+        // Lê a opção e trata entrada inválida para evitar loop infinito
         if (scanf("%d", &opcao) != 1) {
             while (getchar() != '\n');
             opcao = -1;
@@ -80,6 +95,7 @@ int main() {
         }
 
         switch (opcao) {
+            // Cadastra uma nova pessoa com ID sequencial e salva no arquivo
             case 1:
                 if (total >= MAX_PESSOAS) {
                     printf("Limite atingido.\n");
@@ -90,10 +106,12 @@ int main() {
                 }
                 break;
 
+            // Exibe todos os registros cadastrados
             case 2:
                 listar_todos(pessoas, total);
                 break;
 
+            // Busca e exibe um registro pelo ID informado
             case 3: {
                 int id;
                 printf("ID: ");
@@ -114,6 +132,7 @@ int main() {
                 break;
             }
 
+            // Busca e exibe todos os registros cujo nome contenha a substring informada
             case 4: {
                 char nome[MAX_NOME];
                 printf("Nome: ");
@@ -137,18 +156,22 @@ int main() {
                 break;
             }
 
+            // Abre o fluxo de edição de um registro existente
             case 5:
                 editar_pessoa(pessoas, total);
                 break;
 
+            // Exclui um registro com backup automático (exclusão reversível)
             case 6:
                 excluir_pessoa(pessoas, &total);
                 break;
 
+            // Exclui um registro permanentemente de todos os arquivos
             case 7:
                 excluir_permanente(pessoas, &total);
                 break;
 
+            // Restaura o último estado salvo no arquivo de backup
             case 8:
                 restaurar_backup(pessoas, &total);
                 break;
@@ -161,6 +184,7 @@ int main() {
                 printf("Opcao invalida.\n");
         }
 
+        // Aguarda confirmação do usuário antes de exibir o menu novamente
         if (opcao != 0) {
             aguardar_enter();
         }
